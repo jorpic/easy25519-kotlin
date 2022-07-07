@@ -1,4 +1,4 @@
-package crypto.math.curve25519
+package crypto.curve25519.math
 
 import net.i2p.crypto.eddsa.Utils
 import net.i2p.crypto.eddsa.math.Field as _Field
@@ -11,16 +11,15 @@ import java.util.Random
 import java.security.MessageDigest
 
 
-// Don't mix field elements from different fields
-
-
 interface Field {
     val untypedField: _Field
 }
 
-class FieldElement<out F: Field>
-    private constructor(val x: _FieldElement)
+
+class FieldElement<F: Field>
+    private constructor(val el: _FieldElement)
 {
+    // Constructors
     companion object {
         fun <F: Field> fromBytesLE(f: F, b: ByteArray) = FieldElement<F>(
             f.untypedField.fromByteArray(b)
@@ -32,28 +31,54 @@ class FieldElement<out F: Field>
                 for (i in 0..3) it[i] = (x shr (i*8)).toByte()
             }
         )
+
+        fun <F: Field> fromUntyped(x: _FieldElement) = FieldElement<F>(x)
     }
+
+    // Operators
+    operator fun plus(x: FieldElement<F>) = FieldElement<F>(this.el.add(x.el))
+    operator fun minus(x: FieldElement<F>) = FieldElement<F>(this.el.subtract(x.el))
+    operator fun times(x: FieldElement<F>) = FieldElement<F>(this.el.multiply(x.el))
+    operator fun div(x: FieldElement<F>) = FieldElement<F>(this.el.divide(x.el))
+
+    // Structural equality
+    override fun equals(other: Any?)
+        = other is FieldElement<*>
+        // FIXME: We can't check field tag here.
+        // This allows elements from different fields to be considered equal.
+        && this.el.equals(other.el)
+
+    override fun hashCode() = this.el.hashCode()
+
+    // Utility
+    fun toBytes() = this.el.toByteArray()
+    fun toHex() = Utils.bytesToHex(this.toBytes())
 }
 
 interface Curve<out F: Field> {
     val spec: EdDSANamedCurveSpec
-    val basePoint: GroupElement<Curve<F>>
 }
 
-class GroupElement<out C: Curve<*>>
+
+class GroupElement<out C: Curve<*>, out R: GroupElement.Rep>
     private constructor(val x: _GroupElement)
 {
+    interface Rep
+    class P1P1 : Rep
+    class P2 : Rep
+    class P3 : Rep // it is P3PrecomputedDouble actually
+
+
     companion object {
         fun <C: Curve<*>> P3(c: C, b: ByteArray)
-            = GroupElement<C>(
+            = GroupElement<C, P3>(
                 _GroupElement(c.spec.curve, b, true)
             )
 
         fun <C: Curve<*>> basePointOf(c: C)
-            = GroupElement<C>(c.spec.getB())
+            = GroupElement<C, P3>(c.spec.getB())
     }
 }
-
 
 
 object GF25519 : Field {
@@ -63,5 +88,5 @@ object GF25519 : Field {
 
 object Curve25519: Curve<GF25519> {
     override val spec = EdDSANamedCurveTable.ED_25519_CURVE_SPEC
-    override val basePoint = GroupElement.basePointOf<Curve25519>(this)
+    val basePoint = GroupElement.basePointOf<Curve25519>(this)
 }

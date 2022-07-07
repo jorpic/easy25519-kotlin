@@ -18,14 +18,9 @@ dependencies {
     testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
 
     test {
-        useJUnitPlatform()
         testLogging {
             outputs.upToDateWhen {false}
             showStandardStreams = true
         }
     }
-}
-
-test {
-    useJUnitPlatform()
 }
