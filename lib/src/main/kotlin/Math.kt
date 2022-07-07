@@ -86,8 +86,9 @@ class GroupElement<C: Curve<*>, R: Rep>
     // Structural equality
     override fun equals(other: Any?)
         = other is GroupElement<*, *>
-        // This allows elements from different fields to be considered equal.
-        && this.el.equals(other.el)
+        && this.el.getCurve().equals(other.el.getCurve())
+        && this.toUniversal().toP3().el
+            .equals(other.toUniversal().toP3().el)
 
     override fun hashCode() = this.el.hashCode()
 
@@ -144,8 +145,6 @@ fun <C: Curve<*>> // U -> P3
                     _GroupElement(this.el.getCurve(), this.toBytes(), true)
             }
         )
-
-
 
 // NB. Operators can't be part of class definition as we overload them
 // depending on a generic parameter (representation tag).

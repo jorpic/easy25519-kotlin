@@ -29,5 +29,9 @@ class MathTest {
         val three = FieldElement.fromLong(GF25519, 3L)
 
         assertTrue(three * b == b + b + b, "add")
+
+        val x = FieldElement.fromLong(GF25519, 12345678910L)
+        val y = FieldElement.fromLong(GF25519, 90807060504030201L)
+        assertTrue(x * b + y * b == (x + y) * b, "distributivity")
     }
 }
