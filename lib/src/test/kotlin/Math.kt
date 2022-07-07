@@ -18,13 +18,16 @@ class MathTest {
 
     @Test fun groupArithmetics() {
         val b: GroupElement<Curve25519, Rep.P3> = Curve25519.basePoint
-
-        val bb: GroupElement<Curve25519, Rep.P1P1> = b + b.toCached()
-
-        val two = FieldElement.fromLong(GF25519, 2L)
         val three = FieldElement.fromLong(GF25519, 3L)
 
         assertTrue(three * b == (b + b.toCached()).toP3() + b.toCached(), "add")
         assertTrue(three * b == b * three, "add")
+    }
+
+    @Test fun universalRepresentation() {
+        val b: GroupElement<Curve25519, Rep.U> = Curve25519.basePoint.toUniversal()
+        val three = FieldElement.fromLong(GF25519, 3L)
+
+        assertTrue(three * b == b + b + b, "add")
     }
 }

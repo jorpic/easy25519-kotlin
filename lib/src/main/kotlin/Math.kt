@@ -6,9 +6,6 @@ import net.i2p.crypto.eddsa.math.FieldElement as _FieldElement
 import net.i2p.crypto.eddsa.math.GroupElement as _GroupElement
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveSpec
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable
-import net.i2p.crypto.eddsa.math.ed25519.Ed25519LittleEndianEncoding
-import java.util.Random
-import java.security.MessageDigest
 
 
 interface Field {
@@ -66,6 +63,7 @@ interface Rep {
     class P1P1 : Rep
     class P3 : Rep // it is P3PrecomputedDouble actually
     class CACHED : Rep
+    class U : Rep // Universal representation
 }
 
 class GroupElement<C: Curve<*>, R: Rep>
@@ -100,39 +98,89 @@ class GroupElement<C: Curve<*>, R: Rep>
 
 
 // Allowed representation conversions
+@JvmName("fromP3toCached")
 fun <C: Curve<*>> // P3 -> CACHED
     GroupElement<C, Rep.P3>.toCached()
         = GroupElement.fromUntyped<C, Rep.CACHED>(this.el.toCached())
 
+@JvmName("fromP1P1toP3")
 fun <C: Curve<*>> // P1P1 -> P3
     GroupElement<C, Rep.P1P1>.toP3()
         = GroupElement.fromUntyped<C, Rep.P3>(
             this.el.toP3PrecomputeDouble()
         )
 
+fun <C: Curve<*>> // * -> U
+    GroupElement<C, *>.toUniversal()
+        = GroupElement.fromUntyped<C, Rep.U>(this.el)
+
+@JvmName("fromUtoCached")
+fun <C: Curve<*>> // U -> CACHED
+    GroupElement<C, Rep.U>.toCached()
+        = GroupElement.fromUntyped<C, Rep.CACHED>(
+            when(this.el.getRepresentation()) {
+                _GroupElement.Representation.P1P1 ->
+                    this.el.toP3PrecomputeDouble().toCached()
+                _GroupElement.Representation.P3 ->
+                    this.el.toCached()
+                _GroupElement.Representation.CACHED ->
+                    this.el
+                else ->
+                    _GroupElement(this.el.getCurve(), this.toBytes(), true)
+                        .toCached()
+            }
+        )
+
+@JvmName("fromUtoP3")
+fun <C: Curve<*>> // U -> P3
+    GroupElement<C, Rep.U>.toP3()
+        = GroupElement.fromUntyped<C, Rep.P3>(
+            when(this.el.getRepresentation()) {
+                _GroupElement.Representation.P1P1 ->
+                    this.el.toP3PrecomputeDouble()
+                _GroupElement.Representation.P3 ->
+                    this.el
+                else ->
+                    _GroupElement(this.el.getCurve(), this.toBytes(), true)
+            }
+        )
+
+
+
 // NB. Operators can't be part of class definition as we overload them
 // depending on a generic parameter (representation tag).
+@JvmName("plus_P3_CACHED")
 operator fun <C: Curve<*>>
     GroupElement<C, Rep.P3>.plus(
         x: GroupElement<C, Rep.CACHED>
     ) = GroupElement.fromUntyped<C, Rep.P1P1>(this.el.add(x.el))
 
+@JvmName("plus_U")
+operator fun <C: Curve<*>>
+    GroupElement<C, Rep.U>.plus(
+        x: GroupElement<C, Rep.U>
+    ) = (this.toP3() + x.toCached()).toUniversal()
+
+@JvmName("minus_P3_CACHED")
 operator fun <C: Curve<*>>
     GroupElement<C, Rep.P3>.minus(
         x: GroupElement<C, Rep.CACHED>
     ) = GroupElement.fromUntyped<C, Rep.P1P1>(this.el.sub(x.el))
 
+@JvmName("minus_U")
+operator fun <C: Curve<*>>
+    GroupElement<C, Rep.U>.minus(
+        x: GroupElement<C, Rep.U>
+    ) = (this.toP3() - x.toCached()).toUniversal()
+
 operator fun <F: Field, C: Curve<F>>
     GroupElement<C, *>.times(x: FieldElement<F>)
-        = GroupElement.fromUntyped<C, Rep.P3>(
+        = GroupElement.fromUntyped<C, Rep.U>(
             this.el.scalarMultiply(x.toBytes())
         )
 
 operator fun <F: Field, C: Curve<F>>
-    FieldElement<F>.times(x: GroupElement<C, *>)
-        = GroupElement.fromUntyped<C, Rep.P3>(
-            x.el.scalarMultiply(this.toBytes())
-        )
+    FieldElement<F>.times(x: GroupElement<C, *>) = x * this
 
 
 // Concrete implementations of Field<> and Curve<>
