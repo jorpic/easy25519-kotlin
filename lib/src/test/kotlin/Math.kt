@@ -15,4 +15,16 @@ class MathTest {
         assertTrue((two + two) / two == two, "divide")
         assertTrue(three + two == (three * three + one) / two, "arithmetics")
     }
+
+    @Test fun groupArithmetics() {
+        val b: GroupElement<Curve25519, Rep.P3> = Curve25519.basePoint
+
+        val bb: GroupElement<Curve25519, Rep.P1P1> = b + b.toCached()
+
+        val two = FieldElement.fromLong(GF25519, 2L)
+        val three = FieldElement.fromLong(GF25519, 3L)
+
+        assertTrue(three * b == (b + b.toCached()).toP3() + b.toCached(), "add")
+        assertTrue(three * b == b * three, "add")
+    }
 }

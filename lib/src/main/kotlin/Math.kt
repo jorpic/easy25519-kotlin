@@ -55,32 +55,87 @@ class FieldElement<F: Field>
     fun toHex() = Utils.bytesToHex(this.toBytes())
 }
 
+
 interface Curve<out F: Field> {
     val spec: EdDSANamedCurveSpec
 }
 
 
-class GroupElement<out C: Curve<*>, out R: GroupElement.Rep>
-    private constructor(val x: _GroupElement)
-{
-    interface Rep
+// GroupElement representation type tags
+interface Rep {
     class P1P1 : Rep
-    class P2 : Rep
     class P3 : Rep // it is P3PrecomputedDouble actually
+    class CACHED : Rep
+}
 
-
+class GroupElement<C: Curve<*>, R: Rep>
+    private constructor(val el: _GroupElement)
+{
+    // Constructors
     companion object {
         fun <C: Curve<*>> P3(c: C, b: ByteArray)
-            = GroupElement<C, P3>(
+            = GroupElement<C, Rep.P3>(
                 _GroupElement(c.spec.curve, b, true)
             )
 
         fun <C: Curve<*>> basePointOf(c: C)
-            = GroupElement<C, P3>(c.spec.getB())
+            = GroupElement<C, Rep.P3>(c.spec.getB())
+
+        fun <C: Curve<*>, R: Rep> fromUntyped(el: _GroupElement)
+            = GroupElement<C, R>(el)
     }
+
+    // Structural equality
+    override fun equals(other: Any?)
+        = other is GroupElement<*, *>
+        // This allows elements from different fields to be considered equal.
+        && this.el.equals(other.el)
+
+    override fun hashCode() = this.el.hashCode()
+
+    // Utility
+    fun toBytes() = this.el.toByteArray()
+    fun toHex() = Utils.bytesToHex(this.toBytes())
 }
 
 
+// Allowed representation conversions
+fun <C: Curve<*>> // P3 -> CACHED
+    GroupElement<C, Rep.P3>.toCached()
+        = GroupElement.fromUntyped<C, Rep.CACHED>(this.el.toCached())
+
+fun <C: Curve<*>> // P1P1 -> P3
+    GroupElement<C, Rep.P1P1>.toP3()
+        = GroupElement.fromUntyped<C, Rep.P3>(
+            this.el.toP3PrecomputeDouble()
+        )
+
+// NB. Operators can't be part of class definition as we overload them
+// depending on a generic parameter (representation tag).
+operator fun <C: Curve<*>>
+    GroupElement<C, Rep.P3>.plus(
+        x: GroupElement<C, Rep.CACHED>
+    ) = GroupElement.fromUntyped<C, Rep.P1P1>(this.el.add(x.el))
+
+operator fun <C: Curve<*>>
+    GroupElement<C, Rep.P3>.minus(
+        x: GroupElement<C, Rep.CACHED>
+    ) = GroupElement.fromUntyped<C, Rep.P1P1>(this.el.sub(x.el))
+
+operator fun <F: Field, C: Curve<F>>
+    GroupElement<C, *>.times(x: FieldElement<F>)
+        = GroupElement.fromUntyped<C, Rep.P3>(
+            this.el.scalarMultiply(x.toBytes())
+        )
+
+operator fun <F: Field, C: Curve<F>>
+    FieldElement<F>.times(x: GroupElement<C, *>)
+        = GroupElement.fromUntyped<C, Rep.P3>(
+            x.el.scalarMultiply(this.toBytes())
+        )
+
+
+// Concrete implementations of Field<> and Curve<>
 object GF25519 : Field {
     override val untypedField = Curve25519.spec.curve.field
 }
