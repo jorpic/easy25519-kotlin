@@ -6,6 +6,7 @@ import net.i2p.crypto.eddsa.math.FieldElement as _FieldElement
 import net.i2p.crypto.eddsa.math.GroupElement as _GroupElement
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveSpec
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable
+import crypto.curve25519.utils.randomFieldElement
 
 
 interface Field {
@@ -22,6 +23,8 @@ class FieldElement<F: Field>
             f.untypedField.fromByteArray(b)
         )
 
+        // FIXME: Not sure if this is correct for large numbers.
+        // The code in (de)serializer is contrived a bit.
         fun <F: Field> fromLong(f: F, x: Long) = FieldElement.fromBytesLE<F>(
             f,
             ByteArray(32).also {
@@ -30,6 +33,7 @@ class FieldElement<F: Field>
         )
 
         fun <F: Field> fromUntyped(x: _FieldElement) = FieldElement<F>(x)
+        fun <F: Field> random(f: F) = randomFieldElement(f)
     }
 
     // Operators
