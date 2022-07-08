@@ -8,22 +8,18 @@ import java.util.Random
 
 val G = Curve25519.basePoint.toUniversal()
 
-fun hash(msg: ByteArray): ByteArray {
+fun hash(vararg msg: ByteArray): ByteArray {
     val md = MessageDigest.getInstance("SHA-512")
-    val h = Ed25519ScalarOps().reduce(md.digest(msg))
-    // FIXME: FE cutoff
-    for(i in 15..31) {
-        h[i] = 0
+    msg.forEach {
+        md.update(it)
     }
-    return h
+    return Ed25519ScalarOps().reduce(md.digest())
 }
 
 
-// FIXME: FE cutoff
 fun <F: Field> randomFieldElement(f: F): FieldElement<F> = ByteArray(32).let {
-    for (j in 0..14) {
-        it[j] = rnd.nextInt(0x100).toByte()
-    }
+    rnd.nextBytes(it)
+    it[31] = (it[31].toInt() and 0x3f).toByte()
     FieldElement.fromBytesLE(f, it)
 }
 

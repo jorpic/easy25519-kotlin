@@ -2,6 +2,7 @@ package crypto.curve25519.math
 
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import crypto.curve25519.utils.G
 
 class MathTest {
     @Test fun fieldArithmeticsWithSmallNumbers() {
@@ -37,13 +38,12 @@ class MathTest {
     }
 
     @Test fun universalRepresentation() {
-        val b: GroupElement<Curve25519, Rep.U> = Curve25519.basePoint.toUniversal()
         val x = FieldElement.random(GF25519)
         val y = FieldElement.random(GF25519)
 
-        assertTrue(x * b + y * b == (x + y) * b)
-        assertTrue((x * y) * b == x * (y * b))
-        assertTrue((y * x) * b == x * (y * b))
-        assertTrue(x * (y * b) == y * (x * b))
+        assertTrue(x * G + y * G == (x + y) * G)
+        assertTrue(x * (y * G) == y * (x * G))
+        assertTrue(GF25519.mul(x, y) * G == x * (y * G))
+        assertTrue(GF25519.mul(y, x) * G == y * (x * G))
     }
 }

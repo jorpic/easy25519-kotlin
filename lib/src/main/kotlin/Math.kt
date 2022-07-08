@@ -4,6 +4,7 @@ import net.i2p.crypto.eddsa.Utils
 import net.i2p.crypto.eddsa.math.Field as _Field
 import net.i2p.crypto.eddsa.math.FieldElement as _FieldElement
 import net.i2p.crypto.eddsa.math.GroupElement as _GroupElement
+import net.i2p.crypto.eddsa.math.ScalarOps
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveSpec
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable
 import crypto.curve25519.utils.randomFieldElement
@@ -11,6 +12,7 @@ import crypto.curve25519.utils.randomFieldElement
 
 interface Field {
     val untypedField: _Field
+    val scalarOps: ScalarOps
 }
 
 
@@ -193,6 +195,14 @@ operator fun <F: Field, C: Curve<F>>
 // Concrete implementations of Field<> and Curve<>
 object GF25519 : Field {
     override val untypedField = Curve25519.spec.curve.field
+    override val scalarOps = Curve25519.spec.getScalarOps()
+    val ZERO = FieldElement.fromLong(this, 0)
+    fun mul(x: FieldElement<GF25519>, y: FieldElement<GF25519>)
+        = FieldElement.fromBytesLE(
+            this,
+            scalarOps.multiplyAndAdd(x.toBytes(), y.toBytes(), ZERO.toBytes())
+        )
+
 }
 
 
