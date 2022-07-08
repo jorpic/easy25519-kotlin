@@ -65,7 +65,7 @@ interface Curve<out F: Field> {
 // GroupElement representation type tags
 interface Rep {
     class P1P1 : Rep
-    class P3 : Rep // it is P3PrecomputedDouble actually
+    class P3 : Rep // it is P3PrecomputeDouble actually
     class CACHED : Rep
     class U : Rep // Universal representation
 }
@@ -103,6 +103,8 @@ class GroupElement<C: Curve<*>, R: Rep>
 
 
 // Allowed representation conversions
+// FIXME: for now we are using PrecomputeDouble everywhere but this
+// precomputation is a wasted effort if we don't use doubleScalarMutliply.
 @JvmName("fromP3toCached")
 fun <C: Curve<*>> // P3 -> CACHED
     GroupElement<C, Rep.P3>.toCached()
@@ -143,8 +145,6 @@ fun <C: Curve<*>> // U -> P3
             when(this.el.getRepresentation()) {
                 _GroupElement.Representation.P1P1 ->
                     this.el.toP3PrecomputeDouble()
-                _GroupElement.Representation.P3 ->
-                    this.el
                 else ->
                     _GroupElement(this.el.getCurve(), this.toBytes(), true)
             }
@@ -181,6 +181,10 @@ operator fun <F: Field, C: Curve<F>>
         = GroupElement.fromUntyped<C, Rep.U>(
             this.el.scalarMultiply(x.toBytes())
         )
+        // NB. scalarMultiply returns pure P3 (without precomputed)
+        // but there is no quick conversion form P3 to P3Precomputed,
+        // so we need to take roundabout.
+        .toP3().toUniversal()
 
 operator fun <F: Field, C: Curve<F>>
     FieldElement<F>.times(x: GroupElement<C, *>) = x * this
