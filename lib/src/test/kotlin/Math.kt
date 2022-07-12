@@ -43,7 +43,7 @@ class MathTest {
 
         assertTrue(x * G + y * G == (x + y) * G)
         assertTrue(x * (y * G) == y * (x * G))
-        assertTrue(GF25519.mul(x, y) * G == x * (y * G))
-        assertTrue(GF25519.mul(y, x) * G == y * (x * G))
+        assertTrue(GF25519.mulMod(x, y) * G == x * (y * G))
+        assertTrue(GF25519.mulMod(y, x) * G == y * (x * G))
     }
 }

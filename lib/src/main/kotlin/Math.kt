@@ -197,12 +197,26 @@ object GF25519 : Field {
     override val untypedField = Curve25519.spec.curve.field
     override val scalarOps = Curve25519.spec.getScalarOps()
     val ZERO = FieldElement.fromLong(this, 0)
-    fun mul(x: FieldElement<GF25519>, y: FieldElement<GF25519>)
-        = FieldElement.fromBytesLE(
-            this,
-            scalarOps.multiplyAndAdd(x.toBytes(), y.toBytes(), ZERO.toBytes())
-        )
+    val ONE = FieldElement.fromLong(this, 1)
 
+    fun mulAddMod(
+        x: FieldElement<GF25519>,
+        y: FieldElement<GF25519>,
+        z: FieldElement<GF25519>
+    ) = FieldElement.fromBytesLE(
+        this,
+        scalarOps.multiplyAndAdd(x.toBytes(), y.toBytes(), z.toBytes())
+    )
+
+    fun mulMod(
+        x: FieldElement<GF25519>,
+        y: FieldElement<GF25519>
+    ) = mulAddMod(x, y, ZERO)
+
+    fun addMod(
+        x: FieldElement<GF25519>,
+        y: FieldElement<GF25519>
+    ) = mulAddMod(ONE, x, y)
 }
 
 

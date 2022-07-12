@@ -14,20 +14,14 @@ data class Signature(
             val r = FieldElement.random(GF25519)
             val R = r * G
             val P = s.publicKey.ge
-            val H = FieldElement.fromBytesLE(
-                GF25519,
-                hash(R.toBytes(), P.toBytes(), msg)
-            )
-            val sig = r + GF25519.mul(H, s.fe)
+            val H = hash(R.toBytes(), P.toBytes(), msg)
+            val sig = GF25519.mulAddMod(H, s.fe, r)
             return Signature(R, sig)
         }
     }
 
     fun verify(p: PublicKey, msg: ByteArray): Boolean {
-        val H = FieldElement.fromBytesLE(
-            GF25519,
-            hash(this.rnd.toBytes(), p.ge.toBytes(), msg)
-        )
+        val H = hash(this.rnd.toBytes(), p.ge.toBytes(), msg)
         return this.sig * G == this.rnd + p.ge * H
     }
 }
