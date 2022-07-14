@@ -1,6 +1,6 @@
 package crypto.curve25519.utils
 
-import crypto.curve25519.math.*
+import crypto.curve25519.math_old.*
 import net.i2p.crypto.eddsa.math.ed25519.Ed25519ScalarOps
 import java.security.MessageDigest
 import java.util.Random

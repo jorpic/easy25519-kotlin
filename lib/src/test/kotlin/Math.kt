@@ -1,4 +1,4 @@
-package crypto.curve25519.math
+package crypto.curve25519.math_old
 
 import kotlin.test.Test
 import kotlin.test.assertTrue

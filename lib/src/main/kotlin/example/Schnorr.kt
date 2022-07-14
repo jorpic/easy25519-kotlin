@@ -1,6 +1,6 @@
 package crypto.curve25519.example.schnorr
 
-import crypto.curve25519.math.*
+import crypto.curve25519.math_old.*
 import crypto.curve25519.utils.*
 import crypto.curve25519.example.keys.*
 

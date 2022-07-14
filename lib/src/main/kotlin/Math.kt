@@ -1,4 +1,4 @@
-package crypto.curve25519.math
+package crypto.curve25519.math_old
 
 import net.i2p.crypto.eddsa.Utils
 import net.i2p.crypto.eddsa.math.Field as _Field
