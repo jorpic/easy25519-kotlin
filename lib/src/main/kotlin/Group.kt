@@ -24,6 +24,8 @@ class CurveGroup
         CurveGroup(this.el.scalarMultiply(x.toBytes()))
 
     companion object {
+        fun fromUntyped(el: _GroupElement) = CurveGroup(el)
+
         fun doubleMul(
             x: GF25519ModL, a: CurveGroup,
             y: GF25519ModL, b: CurveGroup
@@ -37,19 +39,23 @@ class CurveGroup
 
 private typealias Grp = CurveGroup
 private typealias GrE = CurveGroup_Expr
+private typealias GF = GF25519
 private typealias GFL = GF25519ModL
 private typealias GFE = GF25519ModL_Expr
 
 
-sealed interface CurveGroup_Expr {
-    fun eval(): Grp
+sealed abstract class CurveGroup_Expr {
+    abstract fun eval(): Grp
+    override fun equals(other: Any?) =
+        other is CurveGroup_Expr && this.eval() == other.eval()
+    override fun hashCode() = this.eval().hashCode()
 }
 
-private data class Val(val v: Grp): GrE {
+private data class Val(val v: Grp): GrE() {
     override fun eval() = v
 }
 
-private data class Add(val x: GrE, val y: GrE): GrE {
+private data class Add(val x: GrE, val y: GrE): GrE() {
     override fun eval() = Add.eval(x, y)
 
     companion object {
@@ -72,7 +78,7 @@ private data class Add(val x: GrE, val y: GrE): GrE {
     }
 }
 
-private data class Mul(val x: GFL, val y: GrE): GrE {
+private data class Mul(val x: GFL, val y: GrE): GrE() {
     override fun eval(): Grp = when (y) {
         is Val -> y.eval().mul(x)
         is Add -> CurveGroup.doubleMul(x, y.x.eval(), x, y.y.eval())
@@ -81,9 +87,13 @@ private data class Mul(val x: GFL, val y: GrE): GrE {
 }
 
 
-operator fun GFL.times(x: Grp): GrE = Mul(this, Val(x))
+operator fun GF.times(x: Grp): GrE = Mul(
+    GF25519ModL.fromUnsafeUntyped(this.el),
+    Val(x))
 operator fun GFE.times(x: Grp): GrE = Mul(this.eval(), Val(x))
-operator fun GFL.times(x: GrE): GrE = Mul(this, x)
+operator fun GF.times(x: GrE): GrE = Mul(
+    GF25519ModL.fromUnsafeUntyped(this.el),
+    x)
 operator fun GFE.times(x: GrE): GrE = Mul(this.eval(), x)
 
 operator fun Grp.plus(x: Grp): GrE = Add(Val(this), Val(x))

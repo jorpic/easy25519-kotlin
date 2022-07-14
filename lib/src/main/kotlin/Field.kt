@@ -1,9 +1,12 @@
 package crypto.curve25519.math.field
 
+import java.util.Random
 import net.i2p.crypto.eddsa.Utils
 import net.i2p.crypto.eddsa.math.FieldElement as _FieldElement
 import crypto.curve25519.math.curve.Curve25519
 
+
+private val rnd = Random()
 
 open class GF25519
     protected constructor(val el: _FieldElement)
@@ -15,6 +18,12 @@ open class GF25519
         fun fromBytesLE(b: ByteArray) = GF25519(GF25519.field.fromByteArray(b))
 
         fun fromLong(x: Long) = GF25519ModL.fromLong(x)
+
+        fun random() = ByteArray(32).let {
+            rnd.nextBytes(it)
+            it[31] = (it[31].toInt() and 0x3f).toByte()
+            GF25519.fromBytesLE(it)
+        }
     }
 
     fun reduce(): GF25519ModL = GF25519ModL.add(GF25519ModL.ZERO, this)
@@ -58,9 +67,11 @@ class GF25519ModL: GF25519
             )
         )
 
-        // FIXME: can be easily abused. rename to unsafe?
         fun fromBytesLE(b: ByteArray) =
             GF25519ModL(GF25519.field.fromByteArray(b))
+
+        fun fromBytes64(b: ByteArray) =
+            GF25519ModL.fromBytesLE(scalarOps.reduce(b))
 
         fun fromUnsafeUntyped(el: _FieldElement) = GF25519ModL(el)
     }
