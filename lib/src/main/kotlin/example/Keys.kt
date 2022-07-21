@@ -1,15 +1,13 @@
 package crypto.curve25519.example.keys
 
-import crypto.curve25519.math.*
-import crypto.curve25519.utils.*
+import crypto.curve25519.*
 
-
-data class SecretKey(val fe: FieldElement<GF25519>) {
+data class SecretKey(val fe: FieldElement) {
     companion object {
-        fun random() = SecretKey(FieldElement.random(GF25519))
+        fun random() = SecretKey(FieldElement.random())
     }
 
-    val publicKey = PublicKey(fe * Curve25519.basePoint)
+    val publicKey = PublicKey(fe * Curve.basePoint)
 }
 
-data class PublicKey(val ge: GroupElement<Curve25519, Rep.U>)
+data class PublicKey(val ge: GroupElement)
