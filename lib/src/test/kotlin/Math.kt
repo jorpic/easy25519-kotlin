@@ -2,7 +2,9 @@ package crypto.curve25519.math_old
 
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import crypto.curve25519.utils.G
+
+val G = Curve25519.basePoint.toUniversal()
+
 
 class MathTest {
     @Test fun fieldArithmeticsWithSmallNumbers() {

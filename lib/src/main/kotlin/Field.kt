@@ -30,7 +30,6 @@ open class GF25519
 
     override fun equals(other: Any?)
         = other is GF25519 && this.el.equals(other.el)
-        // FIXME: compare with GF25519ModL
 
     override fun hashCode() = this.el.hashCode()
 
@@ -95,16 +94,24 @@ private class ScalarOps: Ops {
 }
 
 
-sealed interface GF25519ModL_Expr {
-    fun eval(): GFL
-    fun trace(): String
+sealed class GF25519ModL_Expr {
+    abstract fun eval(): GFL
+    abstract fun trace(): String
+
+    override fun equals(other: Any?) = when (other) {
+        is GF25519ModL_Expr -> this.eval().equals(other.eval())
+        is GF25519 -> this.eval().equals(other)
+        else -> false
+    }
+
+    override fun hashCode() = this.eval().hashCode()
 
     companion object {
         val scalarOps: Ops = ScalarOps()
     }
 }
 
-data class Val(val v: GF) : GFE {
+data class Val(val v: GF) : GFE() {
     // NB: we hope that Val.eval() will be called only as a part of complex
     // expression, and most of the cases will be transformed into
     // mul/add/mulAdd or group scalar multiplication.
@@ -112,7 +119,7 @@ data class Val(val v: GF) : GFE {
     override fun trace() = "Val(${v.toHex()})"
 }
 
-private data class Add(val x: GFE, val y: GFE) : GFE {
+private data class Add(val x: GFE, val y: GFE) : GFE() {
     override fun eval() = Add.eval(GF25519ModL_Expr.scalarOps, x, y)
     override fun trace() = ""
 
@@ -132,7 +139,7 @@ private data class Add(val x: GFE, val y: GFE) : GFE {
     }
 }
 
-private data class Mul(val x: GFE, val y: GFE) : GFE {
+private data class Mul(val x: GFE, val y: GFE) : GFE() {
     override fun eval() = Mul.eval(GF25519ModL_Expr.scalarOps, x, y)
     override fun trace() = ""
 

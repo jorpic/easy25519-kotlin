@@ -17,20 +17,53 @@ class CurveGroup
     fun toBytes() = this.el.toByteArray()
     fun toHex() = Utils.bytesToHex(this.toBytes())
 
-
-    fun add(x: CurveGroup): Grp = CurveGroup(this.el.add(x.el))
-    fun sub(x: CurveGroup): Grp = CurveGroup(this.el.sub(x.el))
+    fun add(x: CurveGroup): Grp = CurveGroup(
+        this.toP3Rep().el.add(x.toCachedRep().el))
+    fun sub(x: CurveGroup): Grp = CurveGroup(
+        this.toP3Rep().el.sub(x.toCachedRep().el))
     fun mul(x: GF25519ModL): Grp =
         CurveGroup(this.el.scalarMultiply(x.toBytes()))
+
+    fun toP3Rep() = CurveGroup(
+        when (this.el.getRepresentation()) {
+            _GroupElement.Representation.P1P1 ->
+                this.el.toP3PrecomputeDouble()
+            else ->
+                _GroupElement(this.el.getCurve(), this.toBytes(), false)
+        }
+    )
+    fun toP3DoubleRep() = CurveGroup(
+        when (this.el.getRepresentation()) {
+            _GroupElement.Representation.P1P1 ->
+                this.el.toP3PrecomputeDouble()
+            else ->
+                _GroupElement(this.el.getCurve(), this.toBytes(), true)
+        }
+    )
+    fun toCachedRep() = CurveGroup(
+        when (this.el.getRepresentation()) {
+            _GroupElement.Representation.P1P1 ->
+                this.el.toP3PrecomputeDouble().toCached()
+            _GroupElement.Representation.P3 ->
+                this.el.toCached()
+            _GroupElement.Representation.CACHED ->
+                this.el
+            else ->
+                _GroupElement(this.el.getCurve(), this.toBytes(), true)
+                    .toCached()
+        }
+    )
 
     companion object {
         fun fromUntyped(el: _GroupElement) = CurveGroup(el)
 
+        // B should be in P3precomputedDouble
         fun doubleMul(
             x: GF25519ModL, a: CurveGroup,
             y: GF25519ModL, b: CurveGroup
         ) = CurveGroup(
-           b.el.doubleScalarMultiplyVariableTime(a.el, x.toBytes(), y.toBytes())
+           b.toP3DoubleRep().el.doubleScalarMultiplyVariableTime(
+               a.el, x.toBytes(), y.toBytes())
         )
 
     }
@@ -44,7 +77,7 @@ private typealias GFL = GF25519ModL
 private typealias GFE = GF25519ModL_Expr
 
 
-sealed abstract class CurveGroup_Expr {
+sealed class CurveGroup_Expr {
     abstract fun eval(): Grp
     override fun equals(other: Any?) =
         other is CurveGroup_Expr && this.eval() == other.eval()
@@ -101,3 +134,35 @@ operator fun Grp.plus(x: GrE): GrE = Add(Val(this), x)
 operator fun GrE.plus(x: Grp): GrE = Add(this, Val(x))
 operator fun GrE.plus(x: GrE): GrE = Add(this, x)
 // operator fun Grp.minus(x: Grp): GrE = 
+
+
+
+class Group {
+    fun asP1P1(): _FieldElement
+}
+
+interface Gp {
+}
+
+interface Rep { }
+interface P1P1: Rep {
+    fun asP1P1()
+}
+
+interface P3: Rep {
+    fun asP3()
+}
+
+class Dyn(val x: Boolean): P3, P1P1 {
+    override fun asP1P1() {}
+    override fun asP3() {}
+}
+
+
+
+fun fx(x: P3, y: P1P1): Boolean = false
+
+val x = Dyn(true)
+val y = Dyn(false)
+val test = fx(x, y)
+
