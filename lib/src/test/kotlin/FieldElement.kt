@@ -5,9 +5,9 @@ import kotlin.test.assertTrue
 
 class FieldElementTest {
     @Test fun fieldArithmeticsWithSmallNumbers() {
-        val one = FieldElement.fromLong(1)
-        val two = FieldElement.fromLong(2)
-        val three = FieldElement.fromLong(3)
+        val one = ModL.fromLong(1)
+        val two = ModL.fromLong(2)
+        val three = ModL.fromLong(3)
 
         assertTrue(one + two == three)
         assertTrue(three - one == two)
@@ -20,9 +20,9 @@ class FieldElementTest {
         val x = FieldElement.random()
         val y = FieldElement.random()
         val z = FieldElement.random()
-        val one = FieldElement.fromLong(1)
+        val one = ModL.fromLong(1)
 
-        assertTrue(x + x + x  == x * (one + one + one))
+        assertTrue(x + x + x == x * (one + one + one))
         assertTrue((x + y)*z == y*z + x*z)
         assertTrue((x * y * z) / y == x * z)
     }

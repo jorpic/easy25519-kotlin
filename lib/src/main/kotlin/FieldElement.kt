@@ -15,19 +15,6 @@ open class FieldElement
             Curve.field.fromByteArray(b)
         )
 
-        fun from64Bytes(b: ByteArray) = FieldElement(
-            Curve.field.fromByteArray(
-                Curve.scalarOps.reduce(b))
-        )
-
-        fun fromLong(x: Long) = FieldElement(
-            Curve.field.fromByteArray(
-                ByteArray(32).also {
-                    for (i in 0..3) it[i] = (x shr (i*8)).toByte()
-                }
-            )
-        )
-
         private val rnd = Random()
 
         fun random(): FieldElement = ByteArray(32).let {
@@ -35,24 +22,6 @@ open class FieldElement
             it[31] = (it[31].toInt() and 0x3f).toByte()
             FieldElement.fromBytesLE(it)
         }
-
-        val ZERO = FieldElement.fromLong(0)
-        val ONE = FieldElement.fromLong(1)
-
-        // TODO: explain what is L
-        // TODO[comment]: x*y + z (mod l)
-        fun mulAddModL(x: FieldElement, y: FieldElement, z: FieldElement) =
-            FieldElement(
-                Curve.field.fromByteArray(
-                    Curve.scalarOps.multiplyAndAdd(
-                        x.toBytes(), y.toBytes(), z.toBytes()))
-            )
-
-        fun mulModL(x: FieldElement, y: FieldElement) =
-            FieldElement.mulAddModL(x, y, FieldElement.ZERO)
-
-        fun addModL(x: FieldElement, y: FieldElement) =
-            FieldElement.mulAddModL(x, FieldElement.ONE, y)
     }
 
     // Arithmetic operations
@@ -60,6 +29,7 @@ open class FieldElement
     operator fun minus(x: FieldElement) = FieldElement(el.subtract(x.el))
     operator fun times(x: FieldElement) = FieldElement(el.multiply(x.el))
     operator fun div(x: FieldElement) = FieldElement(el.divide(x.el))
+    operator fun unaryMinus() = FieldElement(el.negate())
 
     // Structural equality
     override fun equals(other: Any?)
@@ -70,4 +40,40 @@ open class FieldElement
     // Utility
     fun toBytes() = this.el.toByteArray()
     fun toHex() = Utils.bytesToHex(this.toBytes())
+}
+
+
+// TODO: explain what is L
+class ModL(el: _FieldElement) : FieldElement(el) {
+    constructor(fe: FieldElement) : this(ModL.add(fe, ModL.ZERO).el)
+
+    companion object {
+        fun from64Bytes(b: ByteArray) = ModL(
+            Curve.field.fromByteArray(
+                Curve.scalarOps.reduce(b))
+        )
+
+        fun fromLong(x: Long) = ModL(
+            Curve.field.fromByteArray(
+                ByteArray(32).also {
+                    for (i in 0..3) it[i] = (x shr (i*8)).toByte()
+                }
+            )
+        )
+
+        val ZERO = ModL.fromLong(0)
+        val ONE = ModL.fromLong(1)
+
+        // Operations
+        // TODO[comment]: x*y + z (mod l)
+        fun mulAdd(x: FieldElement, y: FieldElement, z: FieldElement) =
+            ModL(
+                Curve.field.fromByteArray(
+                    Curve.scalarOps.multiplyAndAdd(
+                        x.toBytes(), y.toBytes(), z.toBytes()))
+            )
+
+        fun mul(x: FieldElement, y: FieldElement) = ModL.mulAdd(x, y, ModL.ZERO)
+        fun add(x: FieldElement, y: FieldElement) = ModL.mulAdd(x, ModL.ONE, y)
+    }
 }

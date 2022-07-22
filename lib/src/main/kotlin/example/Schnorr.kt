@@ -14,9 +14,8 @@ data class Signature(
         fun from(s: SecretKey, msg: ByteArray): Signature {
             val r = FieldElement.random()
             val R = r * G
-            val P = s.publicKey.ge
-            val h = hash(R.toBytes(), P.toBytes(), msg)
-            val sig = FieldElement.mulAddModL(h, s.fe, r)
+            val h = hash(R.toBytes(), s.publicKey.ge.toBytes(), msg)
+            val sig = ModL.mulAdd(h, s.fe, r)
             return Signature(R, sig)
         }
     }
