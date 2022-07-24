@@ -2,7 +2,7 @@ package crypto.curve25519.example.schnorr
 
 import crypto.curve25519.*
 import crypto.curve25519.utils.*
-import crypto.curve25519.example.keys.*
+import crypto.curve25519.example.key.*
 
 private val G = Curve.basePoint
 

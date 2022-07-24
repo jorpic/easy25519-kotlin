@@ -1,4 +1,4 @@
-package crypto.curve25519.example.keys
+package crypto.curve25519.example.key
 
 import crypto.curve25519.*
 
