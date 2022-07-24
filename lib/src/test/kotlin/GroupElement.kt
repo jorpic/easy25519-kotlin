@@ -16,9 +16,14 @@ class GroupElementTest {
         )
 
         assertTrue(G + G - G == G)
-        assertTrue(y * G == ModL(y) * G)
         assertTrue((two + three) * G == three * G + two * G)
+        assertTrue((three - two) * G == three * G - two * G)
         assertTrue((x + y) * G == x * G + y * G)
+        assertTrue(ModL.L * G == G - G)
+
+        assertTrue(y * G == ModL(y) * G)
+        assertTrue(ModL.sub(two, three) * G == two * G - three * G)
+        assertTrue(ModL.sub(x, ModL(y)) * G == x * G - y * G)
         assertTrue(ModL.mulAdd(x, y, x + y) * G == ModL.mul(x, y) * G + x * G + y * G)
         assertTrue(ModL.mul(x, y) * G == x * (y * G))
     }

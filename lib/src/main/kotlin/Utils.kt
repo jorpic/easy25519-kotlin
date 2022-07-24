@@ -5,7 +5,6 @@ import java.util.Random
 import crypto.curve25519.ModL
 
 
-
 fun hash(vararg msg: ByteArray): ModL {
     val md = MessageDigest.getInstance("SHA-512")
     msg.forEach {

@@ -19,12 +19,8 @@ class GroupElement
     }
 
     // Representation conversions
-    fun toP3() =
-        try { GroupElement(el.toP3PrecomputeDouble()) }
-        catch (e: IllegalArgumentException) {
-            GroupElement.fromBytes(this.toBytes())
-        }
-
+    // FIXME: there could be a better way to get P3 with precomputed single
+    fun toP3() = GroupElement.fromBytes(this.toBytes())
     fun toCached() = GroupElement(this.toP3().el.toCached())
 
 

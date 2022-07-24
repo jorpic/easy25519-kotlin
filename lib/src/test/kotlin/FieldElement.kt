@@ -26,4 +26,16 @@ class FieldElementTest {
         assertTrue((x + y)*z == y*z + x*z)
         assertTrue((x * y * z) / y == x * z)
     }
+
+    @Test fun modLArithmetics() {
+        val x = FieldElement.random()
+        val y = FieldElement.random()
+        val z = FieldElement.random()
+
+        assertTrue(ModL.sub(ModL.add(x, y), ModL(y))== ModL(x))
+        assertTrue(ModL.sub(ModL.mulAdd(x, y, z), ModL(z))== ModL.mul(x, y))
+        assertTrue(
+            ModL.sub(ModL.mul(x, y), ModL.mul(x,z)) ==
+            ModL.mul(x, ModL.sub(y, ModL(z))))
+    }
 }
