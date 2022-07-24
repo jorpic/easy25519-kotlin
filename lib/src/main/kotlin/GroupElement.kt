@@ -1,5 +1,6 @@
 package crypto.curve25519
 
+import java.util.Random
 import net.i2p.crypto.eddsa.Utils
 import net.i2p.crypto.eddsa.math.GroupElement as _GroupElement
 import crypto.curve25519.Curve
@@ -16,6 +17,17 @@ class GroupElement
         )
 
         fun fromUntyped(el: _GroupElement) = GroupElement(el)
+
+        fun random(): GroupElement {
+            val b = ByteArray(32)
+            val rnd = Random()
+            while(true) {
+                try {
+                    rnd.nextBytes(b)
+                    return GroupElement.fromBytes(b)
+                } catch (e: IllegalArgumentException) {}
+            }
+        }
     }
 
     // Representation conversions
@@ -45,6 +57,15 @@ class GroupElement
     // Utility
     fun toBytes() = this.el.toByteArray()
     fun toHex() = Utils.bytesToHex(this.toBytes())
+
+    fun checkPeriod(n: Long): Long {
+        var p = this + this
+        var i = n
+        while(--i > 0 && p != this && p != Curve.basePoint) {
+            p = p + this
+        }
+        return n - i
+    }
 }
 
 
