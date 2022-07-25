@@ -6,7 +6,7 @@ import crypto.curve25519.example.pedersen.Commitment
 
 class Mimblewimble {
 
-    // Token owner know the value and the blinding key.
+    // Token owner knows its value and blinding key.
     data class Token(
         val value: Long,
         val bk: FieldElement = FieldElement.random(),

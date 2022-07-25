@@ -60,7 +60,6 @@ data class Transaction(
             } else return null
         }
 
-
         fun finalize(
             offer: Offer,
             acc: Acceptance,
