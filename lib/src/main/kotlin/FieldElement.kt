@@ -57,7 +57,7 @@ class ModL(el: _FieldElement) : FieldElement(el) {
         fun fromLong(x: Long) = ModL(
             Curve.field.fromByteArray(
                 ByteArray(32).also {
-                    for (i in 0..3) it[i] = (x shr (i*8)).toByte()
+                    for (i in 0..7) it[i] = (x shr (i*8)).toByte()
                 }
             )
         )
